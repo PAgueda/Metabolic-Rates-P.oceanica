@@ -4,8 +4,8 @@
 % various types conforming to the necessary input style.  It is supposed to
 % be simple to import the data and run.
 %
-% - This version contains the latest modifications made at IMEDEA by Peru Águeda, 2022
-%   Changes performed by Susana Flecha, 2020:
+% - This version has been modified at IMEDEA by Susana Flecha, 2020 
+%   Changes performed:
 %       Input parameters reorganization
 %       Dissolved oxygen equation: Salinity is includedff
 %       Salinity can be included as the 7th column in file (optional)
@@ -24,9 +24,10 @@
 %       *We include different choices to estimate daylight respiration
 %       *An output file with information on respiration and temperature is
 %       also savecd
-%   Changes by Peru Águeda, 2022:
+%       Changes by Peru Águeda, 2022:
 %   New parametrization for k600, based on Dueñas et al. (1986)
-%   
+%   This version is exclusively for calculations in leap years. 366 days
+%   have been considered for all daily calculations.
 % *************************************************************************
 % Input file requirements:
 % The following files should be *.csv files (text files which are comma 
@@ -84,7 +85,7 @@ close all % close all open figures
 % -- PARAMETERS > Imedea
 ik660formulation=4; % 1>Original formulation by Cole&Caraco 98 2> Wanninkhof Quadratic  3> K&K Cubic 4>Dueñas Exponential (Recommended)
 daylightRoption=1; % 1> Using Night Resp. for daylight 2> Using Day R as a function of Temp. 3> Using Day R + night anomalies
-k600=0.4; % default is 0.4 m/d.   
+k600=0.4; % default is 0.4 m/d.
 albedo=1; % 1 is no albedo.
 cloudiness=1; % 1 is no cloudiness %this is noy used above,?????
 lat=39.14; % Put the lattitude manually!!!
@@ -245,8 +246,8 @@ end
 % based on WisconsinLight.m from Jon Cole
 % *************************************************************************
 lat=lat/57.297; %lat converted to radians at Paul L. dyke, 57.297 = 180/pi
-day=[1:365]';%day of year. could be read in from file
-rads=2*pi*day/365; 
+day=[1:366]';%day of year. could be read in from file
+rads=2*pi*day/366; 
 %dec is the declination of the sun f of day  Spencer, J.W. 1971: Fourier
 %series representation of the position of the Sun. Search, 2(5), 172.
 dec=0.006918-0.399912*cos(rads)+0.070257*sin(rads)...
@@ -257,15 +258,15 @@ x=(-1*sin(lat)*sin(dec))./(cos(lat)*cos(dec));
 SR=(pi/2)-atan(x./(sqrt(1-x.^2))); 
 SR=SR*2/.262; %converts SR from radians back to hours of daylight.
 %need to adjust clock time which is in Central Daylight Savings time by 1 h.
-dates=(1:365)';
+dates=(1:366)';
 sunrise=dates+(12-(SR*0.5)+1)./24; %Sunrise in hours Central Daylight Savings time
 sunset=dates+(12+(SR*0.5)+1)./24;	%Sunset in CDST
 sunrise=sunrise+datenum(SDYear(1),1,0);  % Format at a Matlab Date/Time
 sunset=sunset+datenum(SDYear(1),1,0);    % Format at a Matlab Date/Time
 hsunrise=(12-(SR*0.5)+1); % Hour of sunrise for each year day - IMEDEA
 hsunset=(12+(SR*0.5)+1);% Hour of sunset for each year day - IMEDEA
-datesunrise=floor(SDdate)+interp1(1:365,hsunrise,SDDOY)/24; % Date at which sunrise starts - IMEDEA
-datesunset=floor(SDdate)+interp1(1:365,hsunset,SDDOY)/24; % Date at which sunset starts - IMEDEA
+datesunrise=floor(SDdate)+interp1(1:366,hsunrise,SDDOY)/24; % Date at which sunrise starts - IMEDEA
+datesunset=floor(SDdate)+interp1(1:366,hsunset,SDDOY)/24; % Date at which sunset starts - IMEDEA
 clear albedo cloudiness lat day rads dec x SR
 %**************************************************************************
 % calculate oxygen in mg/L from percent saturation, where percent sat in data is 
@@ -306,7 +307,7 @@ for i=firstdeploy:lastdeploy
    k600j=k600_calc(rows_in_deployment_i); %create a vector of k600
    
    %calculate Schmidt number for O2 from temperature.
-%    schmidt=(1800.6-120.1*temp)+(3.7818*temp.^2)-0.047608*temp.^3;
+   %schmidt=(1800.6-120.1*temp)+(3.7818*temp.^2)-0.047608*temp.^3;
    % IMEDEA Version - modifying the Schmidt number for salty water
    schmidt=(1953.4-128*temp)+(3.998*temp.^2)-0.050091*temp.^3;
 
@@ -333,13 +334,16 @@ for i=firstdeploy:lastdeploy
    m=((dO2dt).*(zmix))- gasflux;%UNITS:mmol*(m^-2)*(minute^-1) from NEP calculation NEP=AO2-D
    dO2term=(dO2dt).*(zmix);
    
-   figure(90)
+  
+
+figure(90)
    xtime=time;xtime(1)=[];
+   xtime = datetime(xtime,'ConvertFrom','datenum');
    plot(xtime,(dO2dt).*(zmix),xtime,gasflux);legend('(dO_2/dt)·z_m_i_x','gas flux');dateaxis('x',2);
    ylabel('(mmol m^-^2 day^-^1)');
    
-   pause
-   %Create a matrix of time, temperature, and metabolism values (R or NEP) from 
+pause
+     %Create a matrix of time, temperature, and metabolism values (R or NEP) from 
    %this deployment (i)   
    time(1,:)=[]; temp(1,:)=[];kO2(1,:)=[]; DOY(1,:)=[];   
    M_i=[DOY time temp m kO2 zmix];
@@ -539,7 +543,7 @@ for ifitcase=1:2
     RFIT=dum_t*K(2)+K(1);
     if showfigures==1
 
-    figure(50+ifitcase-1),clf
+        figure(50+ifitcase-1),clf
         plot(dum_t,dum_r,'.', 'MarkerSize',12,  'Color', rgb ('DarkBlue'))
         xlabel('Temperature (ºC)')
         ylabel('Night Respiration')
@@ -560,7 +564,7 @@ for ifitcase=1:2
         KFIT=[NaN NaN];
     end
 end
-
+YEAR=sondedata(:,1);
 DOY=dailyNEP(:,1);
 daylight=dailyNEP(:,2);
 NEPlight=dailyNEP(:,3);
@@ -677,21 +681,22 @@ if showfigures==1
     pos1=[bdwidth, 1/2*scnsize(4) + bdwidth, scnsize(3)-2*bdwidth, ...
           scnsize(4)/2-(topbdwidth+bdwidth)];
 
-       figure('Position',pos1)
+    figure('Position',pos1)
     clf
     plot(DOY, GPP,'-s','MarkerSize',10,'MarkerEdgeColor','Black','MarkerFaceColor', rgb ('PaleGreen'), 'Color', ...
-       rgb ('DarkGreen'),'LineWidth',1.75);dateaxis('x',6);
+       rgb ('DarkGreen'),'LineWidth',1.75); dateaxis('x',6);
     hold on;
     plot(DOY, NEPtrue,'-s','MarkerSize',10,'MarkerEdgeColor','Black','MarkerFaceColor', rgb ('LightSkyBlue'), 'Color', ...
         rgb ('DodgerBlue'), 'Linewidth',1.75); dateaxis('x',6);
+   hold on;
     plot(DOY, R24,'-s','MarkerSize',10,'MarkerEdgeColor','Black','MarkerFaceColor', rgb ('Bisque'), 'Color', rgb ('Orange'), ...
       'LineWidth',1.75); dateaxis('x',6);
     hold on
     plot([min(SDDOY) max(SDDOY)], [0 0], 'k-')
-    xlabel('Time (DOY)','FontSize',16);
+    xlabel('Date','FontSize',16);
     ylabel('Oxygen: mmol m^{-2} day^{-1}','FontSize',16);
 
-    title(figuretitle,'Interpreter','none','FontSize',18); %interpreter none turns off
+     title(figuretitle,'Interpreter','none','FontSize',18); %interpreter none turns off
     % the feature that interprets '_' as subscript and '^' as superscript, etc.
 
     legend('GPP','NEP','R24','fontsize',12);

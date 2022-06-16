@@ -17,6 +17,9 @@
 % - This version is like previous IMEDEA version but modifying the matrix
 % size in the R/NEP computations. Also, the determination of darkhours is
 % now corrected.
+%   Changes by Peru Águeda, 2022:
+%       New k600 parametrization based on the experiments by Dueñas et al. (1986).
+%
 %       *It still remains unsolved (in progress), to allow input files to
 %       cover more than one year.
 %       *We include different formulations for K660 from Kihm and Kortzinger

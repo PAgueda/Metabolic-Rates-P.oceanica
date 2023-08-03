@@ -10,7 +10,6 @@
 %have same interval as sonde data - it will be interpolated to it.
 %winddata: time in dayfrac, wind speed m/s
 %interpTime: the time (in dayfrac) to interpolate wind data to.  i.e. the sonde data time
-%Found new parametrization by Dueñas et al. (1986)
 
 function k600=windToK600_imedea(winddata,interpTime,windheight,ik660choice) 
 
@@ -26,14 +25,14 @@ if ik660choice==1
     disp('K600!!! from Cole&Caraco 98 but converted to m/d');
     k600_calc=(2.07+0.215.*wind10.^(1.7))/100 *24; 
 elseif ik660choice==2
-    disp('K660 From Wanninkhof (2014) - Quadratic converted to m/2');
-    k600_calc=[0.251*wind10.^2]/100*24;
+    disp('K660 From Kihm & Kortzinger (2010) - Quadratic converted to m/2');
+    k600_calc=[0.52*wind10.^2]/100*24;
 elseif ik660choice==3
     disp('K660 From Kihm & Kortzinger (2010) - Cubic converted to m/2');
     k600_calc=[ 0.042*wind10.^3]/100*24;
 elseif ik660choice==4
-    disp('K660 From Dueñas et al (1986) - Exponential converted to m/2');
-    k600_calc=[0.49*2.72.^(0.16*wind10)]/100*24;
+      disp('K660 From Kihm & Kortzinger (2010) - Quartic converted to m/2');
+    k600_calc=[0.0031*wind10.^4]/100*24;
 end    
 disp('******************************************************')
 k600_bar=nanmean(k600_calc);
